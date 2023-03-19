@@ -4,7 +4,7 @@ import { Entry } from '../../interfaces';
 import { EntriesContext, entriesReducer } from './'
 
 export interface EntriesState {
-    entries: Entry[]
+    entries: Entry[],
 }
 
 const ENTRIES_INITIAL_STATE: EntriesState = {
@@ -32,9 +32,33 @@ const ENTRIES_INITIAL_STATE: EntriesState = {
 
 export const EntriesProvider: FC<PropsWithChildren> = ({ children }) => {
     const [state, dispatch] = useReducer(entriesReducer, ENTRIES_INITIAL_STATE);
+
+    const addNewEntry = (description: string) => {
+        const newEntry: Entry = {
+            _id: uuidv4(),
+            description,
+            createdAt: Date.now(),
+            status: 'pending'
+        }
+        dispatch({
+            type: '[Entry] - AddEntry',
+            payload: newEntry
+        })
+    }
+
+    const updateEntry = (entry: Entry) => {
+        dispatch({
+            type: '[Entry] - EntryUpdated',
+            payload: entry
+        });
+    }
+
     return (
         <EntriesContext.Provider value={{
-            ...state
+            ...state,
+            // Aca exponemos nuestros metodos.
+            addNewEntry,
+            updateEntry
         }}>
             {children}
         </EntriesContext.Provider>
