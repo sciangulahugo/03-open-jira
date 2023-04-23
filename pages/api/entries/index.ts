@@ -1,10 +1,13 @@
 import { db } from '@/database';
 import { Entry, IEntry } from '@/models';
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { json } from 'stream/consumers';
 
 type Data =
     | { message: string }
     | IEntry[]
+    | IEntry
+
 
 export default function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     switch (req.method) {
@@ -27,5 +30,24 @@ const getEntries = async (res: NextApiResponse<Data>) => {
 }
 
 const postEntry = async (req: NextApiRequest, res: NextApiResponse<Data>) => {
-    return res.status(201).json({ message: 'POST' });
+
+    const { description = '' } = req.body;
+
+    const newEntry = new Entry({
+        description,
+        createdAt: Date.now(),
+    })
+
+    try {
+        await db.connect();
+        // Guardamos en la base de datos.
+        await newEntry.save();
+        await db.disconnect();
+
+        // Permitir la respuesta de IEntry en Data (Al inicio).
+        return res.status(201).json(newEntry);
+    } catch (error) {
+        await db.disconnect();
+        return res.status(500).json({ message: 'Algo salio mal, revisar consola del servidor.' });
+    }
 }
